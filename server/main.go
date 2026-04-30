@@ -1,17 +1,18 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
-	"net"
-	"os"
+    "context"
+    "crypto/tls"
+    "fmt"
+    "log"
+    "net"
+    "os"
 
-	"github.com/BlissPhinehas/distributed-rate-limiter/server/algorithm"
-	pb "github.com/BlissPhinehas/distributed-rate-limiter/proto"
-	"github.com/redis/go-redis/v9"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+    "github.com/BlissPhinehas/distributed-rate-limiter/server/algorithm"
+    pb "github.com/BlissPhinehas/distributed-rate-limiter/proto"
+    "github.com/redis/go-redis/v9"
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/reflection"
 )
 
 // server implements the RateLimiterServer interface generated from our proto
@@ -66,9 +67,19 @@ func main() {
 		redisAddr = "localhost:6379"
 	}
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr: redisAddr,
-	})
+	goredisPassword := os.Getenv("REDIS_PASSWORD")
+
+	opts := &redis.Options{
+		Addr:     redisAddr,
+		Password: goredisPassword,
+	}
+
+	if goredisPassword != "" {
+		tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12}
+		opts.TLSConfig = tlsCfg
+	}
+
+	rdb := redis.NewClient(opts)
 
 	// Verify Redis is reachable before we start accepting traffic
 	if err := rdb.Ping(context.Background()).Err(); err != nil {

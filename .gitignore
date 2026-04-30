@@ -1,0 +1,10 @@
+# gcloud installer
+google-cloud-cli-*.tar.gz
+google-cloud-sdk/
+
+# Go build output
+*.exe
+*.out
+
+# environment files
+.env

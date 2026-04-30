@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package ratelimit;
+
+option go_package = "github.com/BlissPhinehas/distributed-rate-limiter/proto";
+
+// The rate limiting service
+service RateLimiter {
+  // Check if a request is allowed under the token bucket algorithm
+  rpc CheckTokenBucket(RateLimitRequest) returns (RateLimitResponse);
+
+  // Check if a request is allowed under the sliding window log algorithm
+  rpc CheckSlidingWindow(RateLimitRequest) returns (RateLimitResponse);
+}
+
+// A single rate limit check request
+message RateLimitRequest {
+  string client_id = 1;   // unique identifier for the client (e.g. IP, API key)
+  int32  capacity  = 2;   // max tokens / max requests allowed in the window
+  int32  rate      = 3;   // tokens refilled per second (token bucket only)
+  int64  window_ms = 4;   // window size in milliseconds (sliding window only)
+}
+
+// The response telling the caller whether they're allowed through
+message RateLimitResponse {
+  bool   allowed         = 1;  // true = request is allowed
+  int32  remaining       = 2;  // tokens or slots remaining
+  int64  retry_after_ms  = 3;  // if denied, how long to wait in ms
+  string algorithm       = 4;  // which algorithm produced this response
+}

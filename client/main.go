@@ -5,11 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
 	pb "github.com/BlissPhinehas/distributed-rate-limiter/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -26,7 +28,14 @@ func main() {
 	flag.Parse()
 
 	// connect
-	conn, err := grpc.NewClient(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	var creds grpc.DialOption
+	if strings.Contains(*addr, "localhost") || strings.Contains(*addr, "127.0.0.1") {
+		creds = grpc.WithTransportCredentials(insecure.NewCredentials())
+	} else {
+		creds = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, ""))
+	}
+
+	conn, err := grpc.NewClient(*addr, creds)
 	if err != nil {
 		log.Fatalf("could not connect to %s: %v", *addr, err)
 	}
